@@ -69,10 +69,9 @@ def hasher(filename):
         hasher.update(buf)
         res = hasher.hexdigest()        
     return res
-
-#并没什么卵用    
-#def dbcon():
-#    return tornado.database.Connection(MYSQL_HOST, MYSQL_DB, MYSQL_USER, MYSQL_PASS, max_idle_time = 5)
+    
+def dbcon():
+    return tornado.database.Connection(MYSQL_HOST, MYSQL_DB, MYSQL_USER, MYSQL_PASS, max_idle_time = 5)
     
 class BaseHandler(RequestHandler):
     def get_current_user(self):
@@ -266,6 +265,88 @@ class logoutHandler(BaseHandler):
         self.set_secure_cookie("jbloguser","",-1)
         self.send()
 
+class multiEditHandler(BaseHandler): # main, experience, project, honor, contact, link
+    @authenticated
+    def post(self):
+        auth = {
+            "new":   [               "project","experience","honor","contact","link"],
+            "update":["title","main","project","experience","honor","contact","link"],
+            "delete":[               "project","experience","honor","contact","link"],
+        }
+        try:
+            #[{'Default': None,
+            #  'Extra': u'auto_increment',
+            #  'Field': u'id',
+            #  'Key': u'PRI',
+            #  'Null': u'NO',
+            #  'Type': u'int(11)'},{...},...]
+            if self.json['type'] not in auth[self.json['operation']]:
+                raise Exception
+            cols = self.db.query('show columns from '+self.json['type'])
+            cols = filter(lambda x:x not in ['id','date'],map(lambda x:x['Field'],cols))
+            # front end programmer ... aah
+            #cols = map(lambda x:x['Field'],cols)
+            #print self.json['label'].__len__(),cols.__len__(),self.json['label'],cols
+            #if self.json['label'].__len__() < cols.__len__():
+            #    raise Exception('label length too small')
+            #else:
+            #    values = self.json['label'][0:cols.__len__()]
+            keys = []
+            values = []
+            for i in self.json:
+                if(i in cols):
+                    keys.append(i)
+                    values.append(self.json[i])
+            if self.json['operation'] == 'new':
+                keys = ','.join(keys)
+                values = ','.join(map(lambda x:'"'+x+'"',values))
+                sql = 'insert into `'+self.json['type']+'` (%s) value (%s)'%(keys,values)
+            elif self.json['operation'] == 'update':
+                query = ','.join([k+'="'+v+'"' for k,v in zip(keys,values)])
+                sql = 'update '+self.json['type']+'set %s where id=1'%(query)
+            elif self.json['operation'] == 'delete':
+                query = ' and '.join([k+'="'+v+'"' for k,v in zip(keys,values)])
+                sql = 'delete from '+self.json['type']+' where %s'%(query)
+            print sql
+            self.db.execute(sql)
+            self.ret['status']='1'
+        except:
+            logging.traceback.print_exc()
+            self.ret['status']='0'
+        self.send()
+
+class blogEditHandler(BaseHandler):
+    @authenticated
+    def post(self):
+        if self.json['type']=="blog":
+#            try:
+            print self.json['content'].replace('%','%%')
+            self.db.execute('insert into blog (title,abstract,content,label) value ("%s","%s","%s","%s")'
+                            %(self.json['title'].replace('%','%%'),
+                              self.json['content'][0:560].replace('%','%%'),
+                              self.json['content'].replace('%','%%'),
+                              self.json['label'].replace('%','%%')))
+            self.ret['status']='1'                
+#            except:
+ #               self.ret['status']='0'
+        self.send()
+
+class listEditHandler(BaseHandler):
+    @authenticated
+    def post(self):
+        if self.json['type'] in ['project','experience','honor']:
+            try:
+                if self.json['operation'] == 'new':
+                    self.db.execute('alter table '+self.json['type']+' add '+self.json['attr']+' varchar(128) not null')
+                elif self.json['operation'] == 'delete':
+                    self.db.execute('alter table '+self.json['type']+' drop column '+self.json['attr'])
+                else:
+                    raise Exception
+                self.ret['status']='1'
+            except:
+                self.ret['status']='0'
+        self.send()
+
 
 # Disable cache
 class NoCacheStaticFileHandler(StaticFileHandler):
@@ -289,4 +370,12 @@ router = [
     (r"/post/title",titleHandler),
     (r"/post/contact",contactHandler),
     (r"/post/main",mainHandler),
+    (r"/post/register",registerHandler),
+    (r"/post/login",loginHandler),
+    (r"/post/logout",logoutHandler),
+
+    (r"/post/edit",multiEditHandler),
+    (r"/post/edit/blog",blogEditHandler),
+
+    (r"/post/edit/list",listEditHandler),
 ]
