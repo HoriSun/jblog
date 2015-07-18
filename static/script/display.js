@@ -12,6 +12,16 @@ function createItem(){
     return item;
 }
 
+function createTextButton(str, isCurrent) {
+    var item = document.createElement("div");
+    if(isCurrent) {
+        item.setAttribute("class","currentpage textbutton left");
+	} else {
+        item.setAttribute("class","textbutton pointer left");
+    }
+    item.innerHTML = str;
+    return item;
+}
 //http://www.ruanyifeng.com/blog/2009/09/find_element_s_position_using_javascript.html
 function getElementLeft(element){
 　　var actualLeft = element.offsetLeft;
@@ -423,4 +433,183 @@ function goto(type){ // main|projects|experiences|honors|resume|contact|blog
 
 //HTML5无刷新页面前进/后退
 window.onpopstate = display;
+
+
+
+/*********  display contact *********/
+
+function updateItemFromContact(items) {
+    $$('articletree').style.display='none';
+    $$('itemlist').style.display='none';
+    var box = document.getElementById("container");
+    var Contact = document.createElement("div");
+    Contact.setAttribute("id","contact");
+    var p = document.createElement("p");
+    p.innerHTML = "Contact";
+    Contact.appendChild(p);
+    Contact.appendChild(document.createElement("hr"));
+    //console.log(items);
+    for(c in items["contact"]) {
+        var div = document.createElement("div");
+        div.setAttribute("class","contact_detail");
+        div.innerHTML = "<a href='" + items['contact'][c]["url"]+"'>"
+	    + items["contact"][c]["content"] + "</a>";
+        Contact.appendChild(div);
+    }
+    box.appendChild(Contact);
+    var Links = document.createElement("div");
+    Links.setAttribute("id","link");
+    var p2 = document.createElement("p");
+    p2.innerHTML = "Links";
+    Links.appendChild(p2);
+    Links.appendChild(document.createElement("hr"));
+    for(l in items["link"]) {
+        var a = document.createElement("a");
+        a.setAttribute("href", items["link"][l]["url"]);
+        a.innerHTML = "<b>"+items["link"][l]["title"]+"</b>&nbsp;"+items["link"][l]["url"];
+        Links.appendChild(a);
+    }
+    box.appendChild(Links);
+
+
+    //编辑器
+    if(!jblog.getUser()) return;
+    
+    var div = document.createElement("div");
+    div.setAttribute("class","contact_detail contact_editor");
+    div.innerHTML = "<input type='text' class='editInputContact'>(这里填title)<input type='text' class='editInputContact'>(这里填类型)<input class='editInputContact' type='text'>(这里填链接)";
+    var eb = createEditButton();
+    eb.onclick = eval("(function() {var inputs = document.getElementsByClassName('editInputContact'); ajaxhandler('POST','post/edit',NewResult, {'title':inputs[0].value, 'content':inputs[1].value, 'url':inputs[2].value, 'operation':'new','type':'contact' });})");
+    div.appendChild(eb);
+    Contact.appendChild(div);
+   
+    var div = document.createElement("div");
+    div.setAttribute("class","contact_detail contact_editor");
+    div.innerHTML = "<input type='text' class='editInputLink'>(这里填名字)<input type='text' class='editInputLink'>(这里填描述)<input type='text' class='editInputLink'>(这里填链接)";
+    var eb = createEditButton();
+    eb.onclick = eval("(function() {var inputs = document.getElementsByClassName('editInputLink'); ajaxhandler('POST','post/edit',NewResult, {'title':inputs[0].value,  'content':inputs[1].value, 'url':inputs[2].value, 'operation':'new','type':'link' });})");
+    div.appendChild(eb);
+    Links.appendChild(div);
+}
+
+
+
+function updateItemFromResume(items) {
+    var box = document.getElementById("container");
+    $$('articletree').style.display='none';
+    $$('itemlist').style.display='none';
+    //var a = box.children;
+    //for(i=0;i<a.length;)a[0].remove(); 
+    var resumebox = document.createElement("div");
+    resumebox.innerHTML = " \
+        <div id='resume'> \
+            <ul> \
+                <li class='active'>`简历-黄镇杰-SYSU_Advanced_Robotics_Lab.pdf</li> \
+                <li>简历-黄镇杰-SYSU_Advanced_Robotics_Lab.pdf</li> \
+            </ul> \
+            <object data='static/pdf/`简历-黄镇杰-SYSU_Advanced_Robotics_Lab.pdf' type='application/pdf' width='100%' height='700px'> \
+                      alt:<embed src='static/pdf/`简历-黄镇杰-SYSU_Advanced_Robotics_Lab.pdf' type='application/pdf' /> \
+            </object> \
+        </div>  ";
+    box.appendChild(resumebox);
+    var lis = box.getElementsByTagName('li');
+    for(var i=0; i<lis.length; i++) {
+        lis[i].onclick = eval("(function() { changePDF(this);  })");
+    }
+}
+
+function updateItemFromMain(items){
+    var con = $$('container');
+    console.log(items);
+    $$('articletree').style.display='none';
+    $$('itemlist').style.display='none';
+    var mainbox = createItem();
+    mainbox.id = "main";
+    mainbox.setAttribute("style","width:400px;margin:20px auto;");
+    for(i=0;i<mainbox.children.length;i++){
+	var cls = mainbox.children[i].getAttribute("class");
+	if(cls == "content"){
+	    var image = document.createElement("img");
+	    image.setAttribute("style","width:140px;position:relative;margin:0 20px 20px 0;");
+	    image.setAttribute("align","left");
+	    image.setAttribute("src","../img/main.jpg");
+	    mainbox.children[i].appendChild(image);
+	    mainbox.children[i].setAttribute("style","text-indent:2em;line-height:2em;");
+	}
+	if(cls in items){
+	    mainbox.children[i].innerHTML += items[cls];
+	}
+    }
+    con.appendChild(mainbox);
+}
+
+function changePDF(obj) {
+    $$('container').getElementsByTagName('object')[0].setAttribute('data','static/pdf/'+obj.innerHTML);
+    $$('container').getElementsByTagName('embed')[0].setAttribute('src','static/pdf/'+obj.innerHTML);  
+    var lis = $$('container').getElementsByTagName('li');
+    for(var i=0; i<lis.length; i++) {
+        lis[i].setAttribute('class','');
+    }    
+    obj.setAttribute('class','active');
+}
+
+
+function showEditor() {
+    var box = $$('container');
+    //隐藏其他元素
+    $$('articletree').style.display='none';
+    $$('itemlist').style.display='none';
+    
+    var edit = document.createElement('div');
+    edit.setAttribute('id','simditorEdit');
+    edit.innerHTML = " \
+        <div id='editorInnerBox'>\
+        <input type='text' name='title' placeholder='这里输入标题' id='editor_title'> \
+        <iframe src='edit.html' id='editframe' width='103%' height='420px' frameborder='0' marginwidth='0px' marginheight='0px' seamless> \
+        </iframe> \
+        <input type='text' name='label' placeholder='这里输入标签' id='editor_label'> \
+        <div class='editbutton' id='blogsubmit'>Submit!</div> \
+        </div>\
+    ";
+    box.appendChild(edit);
+    $$('blogsubmit').onclick = eval("(function() { blogSubmit(); })");
+}
+function createBlogEditor() {
+    var view = document.createElement("img");
+    view.onclick = eval("(function() { showEditor(); })");
+    return view;
+}
+function blogSubmit() {
+    var in1 = $$("editor_title").value;
+    var in2 = $$('editframe').contentWindow.document.getElementById("editor").value;
+    var in3 = $$("editor_label").value;
+    if( in1 == "" || in2 == "" || in3 == "") {
+        alert("还没填完");
+        return;
+    }
+    ajaxhandler("POST","post/edit/blog",blogEditResult,{"title":escape(in1),"content":escape(in2),"label":in3.replace('，',',').split(',').map(function(x){return escape(x);}).join(','),"type":"blog"}); 
+}
+function blogEditResult(items) {
+    if(items['status'] = '1') {
+        display();
+    }
+    else {
+       alert("Something wrong");
+    }
+}
+function createEditButton() {
+    var view = document.createElement("div");
+    view.setAttribute('class','editbutton');
+    view.innerHTML = 'Submit!';
+    return view;
+}
+function NewResult(items) {
+    if(items['status'] == '0') {
+        alert('什么地方出错了');
+    } else {
+        display();
+    }
+}
+
+
 
