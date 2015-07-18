@@ -195,6 +195,193 @@ function getAttributes(){
     return ret;
 }
 
+var articleNum = 0;
+function updateItem(items){
+    if($$('resume')) $$('resume').remove();
+    if($$('contact')) $$('contact').remove();
+    if($$('link')) $$('link').remove();
+    if($$('main')) $$('main').remove();
+    if($$('simditorEdit')) $$('simditorEdit').remove();
+    if(getstate() == "contact") {
+        updateItemFromContact(items);
+        return;
+    }else if(getstate() == "resume") {
+        updateItemFromResume(items);
+        return;
+    }else if(getstate() == "main") {
+	updateItemFromMain(items);
+	return;
+    }
+    //if(!isempty(items)){
+	$$('articletree').style.display='';
+	var box = $$("articletree");
+	var artlist = box.children;
+	var a = document.getElementsByClassName("article");
+	for(i=0;i<a.length;)a[0].remove(); // remove()后a.length自动减一，故不必i++已经可以
+	var fchild = box.children[0];
+	for(post in items){
+    	    var art = createItem();
+            art.id = "article-"+items[post]["id"]; // post即为序号
+            if(fchild==undefined)
+		box.appendChild(art);
+            else
+		box.insertBefore(art,fchild);
+            for(i=0;i<art.children.length;i++){
+		var p = art.children[i];
+		var attr = p.getAttribute("class");
+		if(items[post][attr]==undefined||items[post][attr]==""){
+                    p.style.display="none";
+                    continue;
+		}	   
+		if(attr == "label"){
+                    var labels = unescape(items[post][attr]).split(',');
+                    for(j=0;j<labels.length;j++)
+                    {
+            		var sp = document.createElement("span");
+			sp.innerHTML = labels[j];
+			p.appendChild(sp);
+                    }
+		}else if(attr == "content"){
+		    var cont = unescape(items[post][attr]).split("\n");
+		    p.innerHTML = "<p>"+cont.join("</p><p>")+"</p>";
+    		}else 
+                    p.innerHTML = unescape(items[post][attr]);
+		
+	        if(attr == "title")
+		    //p.setAttribute('onclick','ajaxhandler("POST","post/item",updateItem,{"type":type,"id":"'+items[post]['id']+'"});');
+		    p.onclick=eval("(function(){ajaxhandler('POST','post/item',updateItem,{'type':'"+getstate()+"','id':'"+items[post]['id']+"'});scrollToArticle();})");
+            }
+	}
+
+
+
+    if(jblog.getUser()) {
+        if(getstate() == "project") {
+            var art = createItem();
+            art.style.border = "1px dashed #000";
+            for(i=1;i<art.children.length;i++) {
+                if(art.children[i].className == "abstract")
+                    art.children[i].innerHTML = "<textarea type=text class='editInputProject " + "editor_"+art.children[i].className + "'></textarea>";
+                else if(art.children[i].className != "content")
+                    art.children[i].innerHTML = "<input type='text' class='editInputProject " + "editor_"+art.children[i].className + "'>";
+            }
+            var eb = createEditButton();
+	    //var ebonclick = "(function() {var inputs = document.getElementsByClassName('editInputProject'); ajaxhandler('POST','post/edit',NewResult, {'title':inputs[0].value, 'abstract':inputs[1].value, 'label':inputs[2].value.split(','),'operation':'new','type':getstate() });})";
+	    
+	    eb.onclick = eval("(function(){\
+		var inputs = document.getElementsByClassName('editInputProject');\
+		var labels = inputs[2].value.split(',');\
+		var itemattr = $$('itemlist').attr;\
+		var ebonclick = {\
+		    'title':inputs[0].value,\
+		    'abstract':inputs[1].value,\
+		    'operation':'new',\
+		    'type':getstate()\
+                };\
+		if(labels.length<itemattr['notnull'].length) alert('too few labels');\
+		else{\
+		    for(i in itemattr['notnull'])\
+			ebonclick[itemattr['notnull'][i]]=labels[i];\
+		    for(i=0;i<labels.length-itemattr['notnull'].length;i++){\
+			ebonclick[itemattr['null'][i]]=labels[i+itemattr['notnull'].length];\
+		    }\
+		}\
+		ajaxhandler('POST','post/edit',NewResult, ebonclick);\
+	    })")
+	
+            //var in = document.getElementsByClassName('editIpnutProject'); console.log(in);  }
+            art.appendChild(eb);
+            box.appendChild(art);
+        }  else if (getstate() == "experience"||getstate() == "honor") {
+            var art = createItem();
+            art.style.border = "1px dashed #000";
+            art.children[1].innerHTML = "<input type='text' class='editInputEH editor_title'>";
+            art.children[4].innerHTML = "<input type='text' class='editInputEH editor_label'>";
+            var eb = createEditButton();
+            //eb.onclick = eval("(function() {var inputs = document.getElementsByClassName('editInputEH'); ajaxhandler('POST','post/edit',NewResult, {'title':inputs[0].value,  'label':inputs[1].value.split(','),'operation':'new','type':getstate() });})");
+	    eb.onclick = eval("(function(){\
+		var inputs = document.getElementsByClassName('editInputEH');\
+		var labels = inputs[1].value.split(',');\
+		var itemattr = $$('itemlist').attr;\
+		var ebonclick = {\
+		    'title':inputs[0].value,\
+		    'operation':'new',\
+		    'type':getstate()\
+                };\
+		if(labels.length<itemattr['notnull'].length) alert('too few labels');\
+		else{\
+		    for(i in itemattr['notnull'])\
+			ebonclick[itemattr['notnull'][i]]=labels[i];\
+		    for(i=0;i<labels.length-itemattr['notnull'].length;i++){\
+			ebonclick[itemattr['null'][i]]=labels[i+itemattr['notnull'].length];\
+		    }\
+		}\
+		ajaxhandler('POST','post/edit',NewResult, ebonclick);\
+	    })")
+            art.appendChild(eb);
+            box.appendChild(art);
+        }
+    }
+
+	articleNum = items.length;
+	updateArticleDisplay(1);
+//    }else{
+//	$$('articletree').style.display='none';
+ //   }
+
+
+}
+
+var APP = 5; // article per page
+function updateTextButton(CurrentPage) {
+    clearTextButton();
+    var buttonNum = Math.ceil(articleNum/APP);
+    var box = $$("articletree");
+    for(var i=1; i<=buttonNum; i++) {
+        var textButton = null;
+        if(i == CurrentPage) {
+            textButton = createTextButton(i.toString(), true);
+        } else {
+            textButton = createTextButton(i.toString(), false);
+            textButton.onclick = eval("(function(){updateArticleDisplay(" + i.toString() + ")})");
+        }
+        box.appendChild(textButton);
+    }
+    if(CurrentPage < buttonNum) {
+        var textButton = createTextButton("下一页", false);
+        textButton.onclick = eval("(function(){updateArticleDisplay(" + (CurrentPage+1).toString() + ")})")
+        box.appendChild(textButton);
+    }
+}
+function clearTextButton() {
+    var a = document.getElementsByClassName("textbutton");
+    for(i=0;i<a.length;)a[0].remove(); // remove()后a.length自动减一，故不必i++已经可以
+}
+
+function updateArticleDisplay(page) {
+    updateTextButton(page);
+    var a = document.getElementsByClassName("article");
+    for(var i=0; i<a.length; i++) {
+        a[i].style.display = "none";
+    }
+    for(var i=(page-1)*APP; i<page*APP && i<a.length; i++) {
+        a[i].style.display = "block";
+    }
+
+}
+
+function updateTitle(items){
+    //console.log(items);
+    var title = document.getElementsByTagName("h1")[0];
+    var description = document.getElementsByTagName("h3")[0];
+    title.innerHTML = items["title"];
+    description.innerHTML = items["description"];
+}
+
+function updateResume(items){
+    if(items['status']=='1')console.log('UPLOAD OK!');
+    else console.log('UPLOAD FAILED');
+}
 
 function fileupload(){
     if(window.FormData){
