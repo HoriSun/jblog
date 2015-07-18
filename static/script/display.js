@@ -57,6 +57,45 @@ function scrollToArticle(){
     window.scrollTo(0,top);
 }
 
+function listupdater(id){
+    var atr = $$(id);
+    var cat = atr.parentNode;
+    var box = $$('itemlist');
+    var query = {};
+    if(id!='item-all-all'){
+	if(box.chosen[cat.id.split('-')[1]]==atr.innerHTML){
+	    box.chosen[cat.id.split('-')[1]] = "";
+	    atr.setAttribute("class",atr.getAttribute("class").split(" chosen").join(""));
+	}else{
+	    if(box.chosen[cat.id.split('-')[1]]){
+		var c = cat.id+"-"+box.chosen[cat.id.split('-')[1]];
+		console.log(c);
+		var tc = $$(c);
+		console.log("cho",tc);
+		try{
+		    var tcc = tc.getAttribute("class");
+		    console.log(tcc);
+		    if(tc!=null){
+			tc.setAttribute("class",tcc?tcc.split(" chosen").join(""):"");
+		    }
+		}catch(e){
+		}
+	    }
+	    box.chosen[cat.id.split('-')[1]] = atr.innerHTML;
+	    var atrc = atr.getAttribute("class");
+	    atr.setAttribute("class",(atrc?atrc:"")+" chosen");
+	}
+	query = box.chosen;
+    }else{
+	box.chosen = {}
+    }
+    
+    query['type']=getstate();
+    if("label" in query){query["label"]=escape(query["label"]).replace(/\%/g,"%%")}
+    console.log(query,$$('itemlist').chosen);
+    ajaxhandler('POST','post/item',updateItem,query);
+    //if(getstate()=="blog")scrollToArticle();
+}
 
 function isempty(obj){
     var empty = true;
@@ -64,6 +103,83 @@ function isempty(obj){
     return empty;
 }
 
+// data fillers , call component creators
+function updateItemList(items){
+    if(isempty(items)){
+	$$('itemlist').style.display='none';
+    }else{
+	$$('itemlist').style.display='';
+	var box = $$("itemlist");
+	box.innerHTML = "";
+
+	box.chosen={}
+	var at = document.createElement("ul");
+	at.id = "item-all";
+	box.appendChild(at);
+	var it = document.createElement("li");
+	it.id = "item-all-all";
+	it.innerHTML = "show all";
+	it.onclick=eval("(function(){listupdater('"+it.id+"');})");
+	at.appendChild(it);
+	for(attr in items){
+	    if(attr=="")continue;
+	    if(attr=="attr"){
+		box.attr = items[attr];
+		continue;
+	    }
+            at = document.createElement("ul");
+            at.id = "item-"+attr;
+            box.appendChild(at);
+            for(itm in items[attr]){
+		var item = unescape(itm);
+		it = document.createElement("li");
+		it.id = at.id+"-"+item;
+		it.innerHTML = item;
+		it.onclick=eval("(function(){listupdater('"+it.id+"');})");
+		at.appendChild(it);
+            }
+/*
+            if(getUser() && (getstate() in {'project':'','experience':'','honor':''})) {
+		it = document.createElement("li");
+		it.setAttribute('class','label_editor');
+		it.innerHTML = "<input type='text'><span class='label_editor_button'>+</span>";
+		it.getElementsByTagName("span")[0].onclick = eval("(function() { \
+                    ajaxhandler('POST','post/edit',NewResult,\
+                                {'label':this.parentNode.children[0].value,\
+                                 'itemAttr':'"+attr+"',\
+                                 'type':'"+getstate()+"',\
+                                 'operation':'new'});})");
+		at.appendChild(it);
+            }
+*/
+    
+	}
+    }
+
+
+    if(jblog.getUser() && (getstate() in {'project':'','experience':'','honor':''})) {
+/*
+        at = document.createElement("ul");
+        at.id = "item-editor";
+        box.appendChild(at);
+        it = document.createElement("li");
+        it.setAttribute('class','label_editor');
+        it.innerHTML = "<input type='text'><span class='label_editor_button'>+</span>";
+        it.getElementsByTagName("span")[0].onclick = eval("(function() { \
+                ajaxhandler('POST','/post/edit/list',NewResult,{'attr':this.parentNode.children[0].value,'type':'"+getstate()+"', 'operation':'new'}); \
+                })");
+        at.appendChild(it);
+*/
+    } else if(jblog.getUser() && getstate() == "blog") {
+        at = document.createElement("ul");
+        at.id = "item-editor";
+        box.appendChild(at);
+        it = document.createElement("li");
+        it.innerHTML = "Add Blog";
+        it.onclick = eval("(function() { showEditor(); })");
+        at.appendChild(it);
+    }
+}
 
 function getAttributes(){
     var ret = [];
