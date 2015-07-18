@@ -117,6 +117,122 @@ class staticHashHandler(BaseHandler): #此处加入处理：静态文件名+?v=h
         print self.ret["path"]
         self.send()
 
+
+        
+itemlistquery = {
+    "blog":["date","label"],
+    "experience":["category"],
+    "honor":["category"],
+    "project":["ptype","role","state","duration"],
+}
+class itemListHandler(BaseHandler):
+    def post(self):
+        infoType = self.json["type"]
+        ret = {}
+        if infoType in itemlistquery:
+            for i in itemlistquery[infoType]:
+                ret[i] = map(lambda x:x[i],self.db.query('select distinct '+i+' from '+infoType))
+            #print ret
+            if(infoType=="blog"):
+                ret['date'] = map(lambda i:str(i),ret['date'])
+                labeltemp = set()
+                for i in ret['label']:
+                    for j in i.split(','):
+                        labeltemp.add(j)
+                ret['label'] = list(labeltemp)
+            print ret
+            for i in ret:
+                self.ret[i] = dict(zip(ret[i],[{} for j in xrange(len(ret[i]))]))
+            #self.ret = ret#dict(zip(itemlistquery[infoType],ret))
+            cols = self.db.query('show columns from '+self.json['type'])
+            cols = filter(lambda x:x not in ['id','date','title']+itemlistquery[self.json['type']],map(lambda x:x['Field'],cols))
+            self.ret['attr'] = {'null':cols,'notnull':itemlistquery[self.json['type']]};
+            print self.ret;
+        #else:
+        #    self.ret = ret
+        self.send()
+
+### FORMAT ###        
+## Request
+#{
+#    "type":"blog",
+#    "year":2015,
+#    "month":2
+
+class itemHandler(BaseHandler):
+    def post(self):
+        infoType = self.json["type"]
+        if(infoType in ['blog','project','experience','honor']):#=="blog"):
+            popper = []
+            for i in self.json:
+                if self.json[i] == "":
+                    popper.append(i)
+            for i in popper:
+                self.json.pop(i)
+            query = [ i+'="'+self.json[i] 
+                      for i in self.json 
+                      if not (i in ["type","month","year","label"])]
+            if "month" in self.json:
+                if not "year" in self.json:
+                    pass
+                else:
+                    query.append('date>="%d-%d-01" and date<"%d-%d-01'%(
+                        self.json['year'],
+                        self.json['month'],
+                        self.json['year'],
+                        self.json['month']+1))
+            if "year" in self.json:
+                query.append('date>="%d-01-01" and date<"%d-01-01'%(
+                    self.json['year'],
+                    self.json['year']+1))  
+            if "label" in self.json:
+                query.append('label like "%%'+'%s'%self.json['label']+'%%')
+            query='" and '.join(query)+'"'
+            print "\n\n\n",query,"\n\n\n"
+            if(infoType == 'blog'):
+                if not 'id' in self.json: 
+                    self.ret = self.db.query('select id,date,title,abstract,label from blog %s;'%('' if query=='"' else 'where '+query))
+                else: #show detail of the item with particular id
+                    self.ret = self.db.query("select * from blog where %s;"%query)
+                for blogpost in self.ret:
+                    blogpost['date'] = str(blogpost['date'])
+                    blogpost['label'] = blogpost['label'].replace('%%','%')
+                    if 'content' in blogpost:
+                        blogpost['content'] = blogpost['content'].replace('%%','%')
+                    blogpost['abstract'] = blogpost['abstract'].replace('%%','%')
+                    blogpost['title'] = blogpost['title'].replace('%%','%')
+            elif(infoType == 'experience'):
+                self.ret = self.db.query('select id,year,month,title,role,location,certificate,category from experience %s;'%('' if query=='"' else 'where '+query))
+                for x in self.ret:
+                    x['label'] = [x['year'],x['month'],x['role'],x['location']]
+            elif(infoType == 'honor'):
+                self.ret = self.db.query('select id,year,month,title,place,location,address,category from honor %s;'%('' if query=='"' else 'where '+query))
+                for x in self.ret:
+                    x['label']=[x['year'],x['month'],x['place'],x['location']]
+            elif(infoType == 'project'):            
+                self.ret = self.db.query('select id,title,ptype,role,state,duration,abstract,sourceCode from project %s;'%('' if query=='"' else 'where '+query))
+                for x in self.ret:
+                    x['label']=[x['ptype'],x['role'],x['state'],x['duration']]    
+        self.send()
+        
+class titleHandler(BaseHandler):
+    def post(self):
+        infoType = self.json["type"]
+        self.ret = self.db.query("select title,description from title where type='"+infoType+"'")[0]
+        self.send()
+        
+class contactHandler(BaseHandler):
+    def post(self):
+        self.ret['contact'] = self.db.query("select id,title,content,url from contact")
+        self.ret['link'] = self.db.query("select id,title,content,url from link")
+        self.send()
+
+class mainHandler(BaseHandler):
+    def post(self):
+        self.ret = self.db.query("select title,content,imageurl from main")[0]
+        #print self.ret
+        self.send()
+
 # Disable cache
 class NoCacheStaticFileHandler(StaticFileHandler):
     def set_extra_headers(self, path):
@@ -134,4 +250,9 @@ router = [
     (r"/(.{0}|script/main\.js)",NoCacheStaticFileHandler,{"path":settings["static_path"],"default_filename":"index.html"}), #不缓存首页和main.js
     (r"/(?!post)(.+)",StaticFileHandler,{"path":settings["static_path"]}), #不匹配post开头的任意url
     (r"/post/statichash",staticHashHandler),
+    (r"/post/itemlist",itemListHandler),
+    (r"/post/item",itemHandler),
+    (r"/post/title",titleHandler),
+    (r"/post/contact",contactHandler),
+    (r"/post/main",mainHandler),
 ]
