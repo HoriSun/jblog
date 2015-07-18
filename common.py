@@ -69,9 +69,10 @@ def hasher(filename):
         hasher.update(buf)
         res = hasher.hexdigest()        
     return res
-    
-def dbcon():
-    return tornado.database.Connection(MYSQL_HOST, MYSQL_DB, MYSQL_USER, MYSQL_PASS, max_idle_time = 5)
+
+#并没什么卵用    
+#def dbcon():
+#    return tornado.database.Connection(MYSQL_HOST, MYSQL_DB, MYSQL_USER, MYSQL_PASS, max_idle_time = 5)
     
 class BaseHandler(RequestHandler):
     def get_current_user(self):
@@ -232,6 +233,39 @@ class mainHandler(BaseHandler):
         self.ret = self.db.query("select title,content,imageurl from main")[0]
         #print self.ret
         self.send()
+
+class registerHandler(BaseHandler):
+    def post(self):
+        try:
+            print "\n\n\n",self.json,"\n\n\n\n"
+            # use the only id to prevent second-time registering
+            self.db.execute("insert into `user` (`id`,`username`,`password`,`email`) values ('%d','%s','%s','%s')"%(1,self.json['username'],self.json['password'],self.json['email']))
+            self.ret = {"status":"1"}
+            self.set_cookie("registered", "true")
+        except:
+            self.ret = {"status":"0"}
+            self.set_cookie("registered", "false")
+        finally:
+            self.send()
+
+class loginHandler(BaseHandler):
+    def post(self):
+        info = self.db.query("select username,password from user");
+        if len(info)==0:
+            self.ret = {"status":"-1"}
+        elif self.json['username']==info[0]['username'] and self.json['password']==info[0]['password']:
+            self.ret = {"status":"1"}
+            self.set_secure_cookie("jbloguser",self.json['username'])
+        else:
+            self.ret = {"status":"0"}
+        self.send()
+
+class logoutHandler(BaseHandler):
+    @authenticated
+    def post(self):
+        self.set_secure_cookie("jbloguser","",-1)
+        self.send()
+
 
 # Disable cache
 class NoCacheStaticFileHandler(StaticFileHandler):
