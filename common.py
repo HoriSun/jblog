@@ -59,7 +59,8 @@ settings = {
 
     #xsrf_cookies,cookie_secret:反跨站脚本攻击
     "xsrf_cookies":True,
-    "cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes), #a random string is set when the server starts
+    #"cookie_secret":base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes), #a random string is set when the server starts
+    "cookie_secret":"CzpRS4gcRoi7Z28O/OVOYcw0WA/w/krYqQd6nD8CH0U=",# for testing, temporary set to unique
 }
 
 def hasher(filename):
@@ -70,8 +71,8 @@ def hasher(filename):
         res = hasher.hexdigest()        
     return res
     
-def dbcon():
-    return tornado.database.Connection(MYSQL_HOST, MYSQL_DB, MYSQL_USER, MYSQL_PASS, max_idle_time = 5)
+#def dbcon():
+#    return tornado.database.Connection(MYSQL_HOST, MYSQL_DB, MYSQL_USER, MYSQL_PASS, max_idle_time = 5)
     
 class BaseHandler(RequestHandler):
     def get_current_user(self):
@@ -347,6 +348,28 @@ class listEditHandler(BaseHandler):
                 self.ret['status']='0'
         self.send()
 
+class uploadHandler(BaseHandler):
+    @authenticated
+    @tornado.web.asynchronous
+    def post(self):
+        if(self.json['type']=='resume'):
+            #try:
+            files = self.json['file']
+            for f in files:
+                filename = f['filename']
+                filepath = os.path.join(settings["static_path"],
+                                        filename)
+                #                        datetime.datetime.now().strftime('%Y-%M-%d'))
+                #if not os.path.exists(filepath):
+                #    os.makedirs(filepath)
+                #file_path = os.path.join(filepath, filename)
+                with open(file_path, 'wb') as up:
+                    up.write(f['body'])     # 写入文件
+            self.ret['status']='1';        
+            #except:
+            #    self.ret['status']='0';
+            
+        self.send()
 
 # Disable cache
 class NoCacheStaticFileHandler(StaticFileHandler):
@@ -362,6 +385,7 @@ class SAEApplication(tornado.wsgi.WSGIApplication):
 
 
 router = [
+    #不是最好的做法。最好是连首页和main.js都用上hash版本控制
     (r"/(.{0}|script/main\.js)",NoCacheStaticFileHandler,{"path":settings["static_path"],"default_filename":"index.html"}), #不缓存首页和main.js
     (r"/(?!post)(.+)",StaticFileHandler,{"path":settings["static_path"]}), #不匹配post开头的任意url
     (r"/post/statichash",staticHashHandler),
@@ -378,4 +402,6 @@ router = [
     (r"/post/edit/blog",blogEditHandler),
 
     (r"/post/edit/list",listEditHandler),
+
+    (r"/post/upload",uploadHandler),
 ]

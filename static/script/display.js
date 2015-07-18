@@ -1,3 +1,11 @@
+function check_HTML5_Storage_Support() {  
+        try {  
+            return 'localStorage' in window && window['localStorage'] !== null;  
+        } catch (e) {  
+            return false;  
+        }  
+}
+
 // component creators
 function createItem(){
     var item = document.createElement("div");
