@@ -1,4 +1,6 @@
 # jblog
+> __文档尚未上传，正在尽快制作__。
+
 求职者的个人博客系统JobBlog，简称jblog. 
 
 sinaapp部署的演示版本,用户名jbloger,密码123456：
