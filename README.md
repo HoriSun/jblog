@@ -1,7 +1,9 @@
 # jblog
 求职者的个人博客系统JobBlog，简称jblog. 
 
-sinaapp部署版本[jblog](http://sysujob.sinaapp.com/)
+sinaapp部署的版本：
+  - 共享版本[sysujob](http://sysujob.sinaapp.com/)
+  - HoriSun部署的更新版[jobblog](http://jobblog.sinaapp.com/)
 
 本项目的产品设计来源于[邱迪聪的博客](http://davidqiu.com/)。
 
