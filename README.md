@@ -3,7 +3,7 @@
 
 sinaapp部署的演示版本,用户名jbloger,密码123456：
   - 共享版本[sysujob](http://sysujob.sinaapp.com/)
-  - HoriSun部署的版本，有小改动[jobblog](http://jobblog.sinaapp.com/)
+  - 组长HoriSun部署的版本，有小改动[jobblog](http://jobblog.sinaapp.com/)
 
 本项目的产品设计来源于[邱迪聪的博客](http://davidqiu.com/)。
 
