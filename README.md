@@ -3,7 +3,7 @@
 
 求职者的个人博客系统JobBlog，简称jblog. 
 
-sinaapp部署的演示版本,用户名jbloger,密码123456：
+[SAE](http://sae.sina.com.cn)部署的演示版本,用户名jbloger,密码123456：
   - 共享版本:  [__sysujob__](http://sysujob.sinaapp.com/)
   - 组长HoriSun部署的版本，有小改动:  [__jobblog__](http://jobblog.sinaapp.com/)
 
