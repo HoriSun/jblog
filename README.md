@@ -1,5 +1,5 @@
 # jblog
-> __文档尚未上传，正在尽快制作__。
+> [__部署文档__](https://github.com/HoriSun/jblog/blob/master/INSTALL.md#jblog-deployment)。
 
 求职者的个人博客系统JobBlog，简称jblog. 
 
