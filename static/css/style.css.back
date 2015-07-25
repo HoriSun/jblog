@@ -1,4 +1,4 @@
- html, body {
+html, body {
     margin: 0;
     height:100%;
 }
@@ -32,50 +32,28 @@ ul     {
 
 /* header */
 #header {
-     /*width: 100%; */
-    /*height: 55px; */
+    width: 100%;
+    height: 55px;
 /*    position: absolute;*/
     position: fixed;
     top: 0px;
     left: 0px;
-    right: 0px;
     background-color:#222;
     color:#777;
-    z-index:100;
-    overflow: visible;
-    clear: both;
-    padding: 0 50px;
+ z-index:100;
 }
-#header .nav{
-    padding-top: 20px; 
-    padding-bottom: 20px; 
-    line-height: 14px;
-    cursor: pointer;
-}
-
-#header .hori{
-    float:left;
-    display: inline;
-    line-height:14px;
-}
-
 #header ul {
-    width:65%;
-    height:54px;
     margin-left:50px;
-    overflow:hidden;
-    /*margin-top: 20px;*/
+    margin-top: 20px;
 }
 #header ul li {
 	float:left;
-    padding:0 15px;
-    padding-left: 15px;
+    margin-left:30px;
     cursor:pointer;
     line-height:14px;
 }
-#header ul li:hover, #header ul li:focus{
+#header ul li:hover {
     color:white;
-    background-color: #333;
 }
 #header #UserArea {
     color:white;
@@ -84,21 +62,13 @@ ul     {
     margin-right: 80px;
     right: 50px;
     background:#2692D3;
-/*    padding:10px;
-    margin:-10px 0;*/
-    padding: 10px;
-    margin:10px auto;
+    padding:10px;
+    margin-top:-10px;
     border-radius:4px;
-    /*float: right;*/
-    position: absolute;
-    line-height:14px;
+    float: right;
 }
-#header .Icon {
+.Bigger {
     font-size:18px;
-}
-
-#header .Icon:hover{
-    color: white;
 }
 
 /* footer */
@@ -322,7 +292,7 @@ hr {
     background:#eee;
     font-size:12px;
     position:fixed;
-    right:40px;
+    left:890px;
     top:20px;
     border-radius:5px;
     box-shadow:0 0 5px 2px #ccc;
