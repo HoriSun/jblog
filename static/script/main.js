@@ -186,7 +186,8 @@ function loadfile(path,type,afterfunc){
         tag.type = "text/css";
         tag.href = hashpath;
         if(afterfunc!=undefined)tag.setAttribute("onload",afterfunc);
-        head.appendChild(tag);
+        //head.appendChild(tag);
+        head.innerHTML += tag.outerHTML;
     }
     function addjs(hashpath,afterfunc){        
         //console.log(hashpath);
@@ -201,6 +202,7 @@ function loadfile(path,type,afterfunc){
   
         //console.log(tag.onload,tag.attributes[3].value,afterfunc);
         head.appendChild(tag);
+        head.innerHTML += tag.outerHTML;
         //fjs.parentNode.insertBefore(tag,fjs)        
     }
     

@@ -1,6 +1,6 @@
 -- DROP DATABASE `app_sysujob` IF EXISTS;-
--- CREATE DATABASE `app_sysujob` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-USE app_sysujob;
+-- CREATE DATABASE `app_jobblog` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+USE app_jobblog;
 
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE IF NOT EXISTS `user` (

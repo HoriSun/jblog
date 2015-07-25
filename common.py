@@ -138,8 +138,9 @@ class itemListHandler(BaseHandler):
                 ret['date'] = map(lambda i:str(i),ret['date'])
                 labeltemp = set()
                 for i in ret['label']:
-                    for j in i.split(','):
-                        labeltemp.add(j)
+                    if i:
+                        for j in i.split(','):
+                            labeltemp.add(j)
                 ret['label'] = list(labeltemp)
             print ret
             for i in ret:
