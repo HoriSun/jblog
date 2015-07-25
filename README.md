@@ -1,5 +1,5 @@
 # jblog
-> [__部署文档__](https://github.com/HoriSun/jblog/blob/master/INSTALL.md#jblog-deployment)。
+> [__部署文档__](https://github.com/HoriSun/jblog/blob/master/INSTALL.md#jblog-deployment)
 
 求职者的个人博客系统JobBlog，简称jblog. 
 
